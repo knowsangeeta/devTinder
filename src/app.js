@@ -6,92 +6,91 @@ const User = require("./models/user.js");
 
 app.use(express.json());
 
-app.post("/signup", async(req, res) => {
-    
+app.post("/signup", async (req, res) => {
+
     const user = new User(req.body);
-    console.log(user);
+
     await user.save().then(() => {
         console.log("User saved successfully");
         res.status(200).json({ message: "User saved successfully" });
     }).catch((err) => {
-        console.error("Error saving user", err);
-        res.status(500).json({ message: "Error saving user" });
+        
+        res.status(500).send({ message: "Error saving user: " + err});
     });
 });
 
-app.get("/user", async(req, res) => {
+app.get("/user", async (req, res) => {
     const userEmail = req.body.email;
-    try{
+    try {
         const user = await User.find({ email: userEmail });
-        if(user.length === 0) {
+        if (user.length === 0) {
             return res.status(404).json({ message: "User not found" });
         }
         res.send(user);
-    } catch(err) {
+    } catch (err) {
         console.error("Error fetching user", err);
         res.status(400).json({ message: "Error fetching user" });
     }
 
 })
-app.get("/feed", async(req, res) => {
+app.get("/feed", async (req, res) => {
     const userEmail = req.body.email;
-    try{
+    try {
         const user = await User.find({});
-        if(user.length === 0) {
+        if (user.length === 0) {
             return res.status(404).json({ message: "User not found" });
         }
         res.send(user);
-    } catch(err) {
+    } catch (err) {
         console.error("Error fetching user", err);
         res.status(400).json({ message: "Error fetching user" });
     }
 
 })
-app.delete("/user", async(req, res) => {
+app.delete("/user", async (req, res) => {
     const userId = req.body.userId;
-    try{
-        const user = await User.findByIdAndDelete({_id: userId});
-        if(!user) {
+    try {
+        const user = await User.findByIdAndDelete({ _id: userId });
+        if (!user) {
             return res.status(404).json({ message: "User not found" });
         }
         res.send("User deleted successfully");
-    } catch(err) {
+    } catch (err) {
         console.error("Error fetching user", err);
         res.status(400).json({ message: "Error fetching user" });
     }
 
 })
-app.delete("/userbyEmail", async(req, res) => {
+app.delete("/userbyEmail", async (req, res) => {
     const userEmail = req.body.email;
-    try{
-        const user = await User.findOneAndDelete({email:userEmail});
-        if(!user) {
+    try {
+        const user = await User.findOneAndDelete({ email: userEmail });
+        if (!user) {
             return res.status(404).json({ message: "User not found" });
         }
         res.send("User deleted successfully");
-    } catch(err) {
+    } catch (err) {
         console.error("Error fetching user", err);
         res.status(400).json({ message: "Error fetching user" });
     }
 
 })
-app.patch("/user/:userId", async(req, res) => {
-    const data   = req.body;
+app.patch("/user/:userId", async (req, res) => {
+    const data = req.body;
     const userId = req.params?.userId;
 
-    try{
-        const AllowedUpdates = ["photoUrl","about","gender","age","skills","password"];
+    try {
+        const AllowedUpdates = ["photoUrl", "about", "gender", "age", "skills", "password"];
         const isUpdateValid = Object.keys(data).every((update) => AllowedUpdates.includes(update));
-        if(!isUpdateValid) {
+        if (!isUpdateValid) {
             return res.status(400).json({ message: "Invalid updates" });
         }
-        const user = await User.findByIdAndUpdate({_id: userId},data,{returnDocument: 'before'},{runValidators: true});
+        const user = await User.findByIdAndUpdate({ _id: userId }, data, { returnDocument: 'before' }, { runValidators: true });
         console.log(user);
         res.send("User updated successfully");
-    }catch(err){
-        
-        res.status(400).json({ message: "Error updating user" });
-    }
+    } catch (err) {
+        res.status(400).send("UPDATE FAILED:" + err.message);
+      }
 })
 connectDB().then(() => {
     console.log("Connected to MongoDB Atlas");
