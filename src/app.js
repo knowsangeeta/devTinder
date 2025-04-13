@@ -75,12 +75,17 @@ app.delete("/userbyEmail", async(req, res) => {
     }
 
 })
-app.patch("/user", async(req, res) => {
+app.patch("/user/:userId", async(req, res) => {
     const data   = req.body;
-    const userId = req.body.userId;
+    const userId = req.params?.userId;
 
     try{
-        const user = await User.findByIdAndUpdate({_id: userId},data,{returnDocument: 'before'});
+        const AllowedUpdates = ["photoUrl","about","gender","age","skills","password"];
+        const isUpdateValid = Object.keys(data).every((update) => AllowedUpdates.includes(update));
+        if(!isUpdateValid) {
+            return res.status(400).json({ message: "Invalid updates" });
+        }
+        const user = await User.findByIdAndUpdate({_id: userId},data,{returnDocument: 'before'},{runValidators: true});
         console.log(user);
         res.send("User updated successfully");
     }catch(err){
