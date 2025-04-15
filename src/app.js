@@ -3,20 +3,33 @@ const connectDB = require("./config/database.js");
 const app = express();
 const port = 7777;
 const User = require("./models/user.js");
+const { validateSignUpData } = require("./utils/validation");
+const bcrypt = require("bcrypt");
 
 app.use(express.json());
 
 app.post("/signup", async (req, res) => {
 
-    const user = new User(req.body);
+    try {
+        // Validation of data
+        validateSignUpData(req);
+        const { firstName, lastName, emailId, password } = req.body;
+        // Encrypt the password
+        const passwordHash = await bcrypt.hash(password, 10);
+        console.log(passwordHash);
+        //   Creating a new instance of the User model
+        const user = new User({
+            firstName,
+            lastName,
+            email,
+            password: passwordHash,
+        });
 
-    await user.save().then(() => {
-        console.log("User saved successfully");
-        res.status(200).json({ message: "User saved successfully" });
-    }).catch((err) => {
-        
-        res.status(500).send({ message: "Error saving user: " + err});
-    });
+        await user.save();
+        res.send("User Added successfully!");
+    } catch (err) {
+        res.status(400).send("ERROR : " + err.message);
+    }
 });
 
 app.get("/user", async (req, res) => {
@@ -90,7 +103,7 @@ app.patch("/user/:userId", async (req, res) => {
         res.send("User updated successfully");
     } catch (err) {
         res.status(400).send("UPDATE FAILED:" + err.message);
-      }
+    }
 })
 connectDB().then(() => {
     console.log("Connected to MongoDB Atlas");
