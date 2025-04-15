@@ -7,6 +7,7 @@ const { validateSignUpData } = require("./utils/validation");
 const bcrypt = require("bcrypt");
 const cookieParser = require("cookie-parser");
 const jwt = require("jsonwebtoken");
+const { userAuth } = require("./middlewares/auth.js");
 
 app.use(express.json());
 app.use(cookieParser());
@@ -36,101 +37,48 @@ app.post("/signup", async (req, res) => {
 });
 app.post("/login", async (req, res) => {
     try {
-      const { email, password } = req.body;
-  
-      const user = await User.findOne({ email: email });
-      if (!user) {
-        throw new Error("Invalid credentials");
-      }
-      const isPasswordValid = await bcrypt.compare(password, user.password);
-  
-      if (isPasswordValid) {
-        //create a jwt token
-        const token = await jwt.sign({ id: user._id }, "SecretKey");
-        //add the token to cookie ans send responnse backk to user
-        res.cookie("token", token );
-        res.send("Login Successful!!!");
-      } else {
-        throw new Error("Invalid credentials");
-      }
+        const { email, password } = req.body;
+
+        const user = await User.findOne({ email: email });
+        if (!user) {
+            throw new Error("Invalid credentials!!");
+        }
+        const isPasswordValid = await user.validatePassword(password);
+
+        if (isPasswordValid) {
+            //create a jwt token
+            const token = await user.getJWT();
+            res.cookie("token", token, {
+                expires: new Date(Date.now() + 8 * 3600000),
+            });
+
+
+            //add the token to cookie ans send responnse backk to user
+            res.cookie("token", token);
+            res.send("Login Successful!!!");
+        } else {
+            throw new Error("Invalid credentials");
+        }
     } catch (err) {
-      res.status(400).send("ERROR : " + err.message);
+        res.status(400).send("ERROR : " + err.message);
     }
-  });
-app.get("/profile", async (req, res) => {
-    try{
-        const cookies = req.cookies;
-        const{ token } = cookies;
-        if(!token){
-            throw new Error("Invialid token");
-        }
-        const decodedMessage = await jwt.verify(token, "SecretKey");
-        const{id}  = decodedMessage;
-        const user = await User.findById(id);
-        if(!user){
-            throw new Error("User not found");
-        }
+});
+app.get("/profile", userAuth, async (req, res) => {
+    try {
+        const user = req.user;
         res.send(user);
-    }catch (err) {
+    } catch (err) {
         res.status(400).send("ERROR : " + err.message);
     }
 })
-app.get("/user", async (req, res) => {
-    const userEmail = req.body.email;
-    try {
-        const user = await User.find({ email: userEmail });
-        if (user.length === 0) {
-            return res.status(404).json({ message: "User not found" });
-        }
-        res.send(user);
-    } catch (err) {
-        console.error("Error fetching user", err);
-        res.status(400).json({ message: "Error fetching user" });
-    }
+app.post("/sendConnectionRequest", userAuth, async (req, res) => {
+    const user = req.user;
+    console.log("Sending connection request to user");
+
+    res.send(user.firstName + " sent connection req");
 
 })
-app.get("/feed", async (req, res) => {
-    const userEmail = req.body.email;
-    try {
-        const user = await User.find({});
-        if (user.length === 0) {
-            return res.status(404).json({ message: "User not found" });
-        }
-        res.send(user);
-    } catch (err) {
-        console.error("Error fetching user", err);
-        res.status(400).json({ message: "Error fetching user" });
-    }
 
-})
-app.delete("/user", async (req, res) => {
-    const userId = req.body.userId;
-    try {
-        const user = await User.findByIdAndDelete({ _id: userId });
-        if (!user) {
-            return res.status(404).json({ message: "User not found" });
-        }
-        res.send("User deleted successfully");
-    } catch (err) {
-        console.error("Error fetching user", err);
-        res.status(400).json({ message: "Error fetching user" });
-    }
-
-})
-app.delete("/userbyEmail", async (req, res) => {
-    const userEmail = req.body.email;
-    try {
-        const user = await User.findOneAndDelete({ email: userEmail });
-        if (!user) {
-            return res.status(404).json({ message: "User not found" });
-        }
-        res.send("User deleted successfully");
-    } catch (err) {
-        console.error("Error fetching user", err);
-        res.status(400).json({ message: "Error fetching user" });
-    }
-
-})
 app.patch("/user/:userId", async (req, res) => {
     const data = req.body;
     const userId = req.params?.userId;
