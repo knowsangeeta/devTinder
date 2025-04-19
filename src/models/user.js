@@ -39,6 +39,10 @@ const userSchema = new mongoose.Schema({
     },
     gender: {
         type: String,
+        enum: {
+            values: ["Female","Male","Others"],
+            message: "{VALUE} is not a valid gender type. ",
+        }
     },
     photoUrl: {
         type: String,
@@ -48,12 +52,19 @@ const userSchema = new mongoose.Schema({
             }
         },
     },
+    about:{
+        type: String,
+        default: "Hey there! I am using DevT.",
+    },
+    skills:{
+        type: [String],
+    },
 });
 
 userSchema.methods.getJWT = async function () {
     const user = this;
   
-    const token = await jwt.sign({ _id: user._id }, "DEV@Tinder$790", {
+    const token = await jwt.sign({ _id: user._id }, "SecretKey", {
       expiresIn: "7d",
     });
   

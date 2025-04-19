@@ -12,9 +12,11 @@ const authRouter = require("./routes/auth.js");
 const requestRouter = require("./routes/request.js");
 const profileRouter = require("./routes/profile.js");
 
+
 app.use("/auth", authRouter);
 app.use("/request", requestRouter);
 app.use("/profile", profileRouter);
+
 
 connectDB()
 .then(() => {
