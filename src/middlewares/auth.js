@@ -10,8 +10,9 @@ const userAuth = async (req, res, next) => {
         }
         const decodedObj = await jwt.verify(token, "SecretKey");
         //validate the token
-        const { id } = decodedObj;
-        const user = await User.findById(id);
+        const { _id } = decodedObj;
+        console.log("Decoded ID:", _id);
+        const user = await User.findById(_id);
         if (!user) {
             throw new Error("User not found");
         }
