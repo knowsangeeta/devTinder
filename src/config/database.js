@@ -7,10 +7,8 @@ const connectDB = async () => {
             throw new Error("MongoDB connection string (MONGODB_URI) is missing in environment variables");
         }
 
-        await mongoose.connect(uri, {
-            useNewUrlParser: true,
-            useUnifiedTopology: true,
-        });
+        // Connect to MongoDB without deprecated options
+        await mongoose.connect(uri);
 
         console.log("MongoDB connected successfully!");
     } catch (err) {
