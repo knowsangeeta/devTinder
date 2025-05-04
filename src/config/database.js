@@ -10,7 +10,7 @@ const connectDB = async () => {
         // Connect to MongoDB without deprecated options
         await mongoose.connect(uri);
 
-        console.log("MongoDB connected successfully!");
+        
     } catch (err) {
         console.error("Error connecting to MongoDB:", err.message);
         throw err; // Re-throw the error to be caught in app.js
